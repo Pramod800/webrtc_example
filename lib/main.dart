@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mqtt_webrtc_example/screens/call_screen.dart';
 import 'package:mqtt_webrtc_example/screens/chat_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Hive.initFlutter();
+  await Hive.openBox('chat_messages');
   runApp(const MyApp());
 }
 
@@ -55,7 +57,10 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ChatScreen(),
+                      builder: (context) => ChatScreen(
+                        chatWithUserId: '123',
+                        currentUserId: '122',
+                      ),
                     ));
               },
               child: const Text("Chat")),
