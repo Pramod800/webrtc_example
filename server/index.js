@@ -13,32 +13,31 @@ const io = socketIO(server, {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  // Handle user joining a room
   socket.on('join', (roomId) => {
-    socket.join(roomId);
-    socket.to(roomId).emit('user-joined', socket.id);
-  });
+  console.log(`User ${socket.id} joined room: ${roomId}`);
+  socket.join(roomId);
+  socket.to(roomId).emit('user-joined', socket.id);
+});
 
+  // Handle offer
   socket.on('offer', (data) => {
-    socket.to(data.roomId).emit('offer', {
-      sdp: data.sdp,
-      sender: socket.id,
-    });
-  });
+  console.log(`Offer from ${socket.id} to room ${data.roomId}`);
+  socket.to(data.roomId).emit('offer', data);
+});
 
-  socket.on('answer', (data) => {
-    socket.to(data.roomId).emit('answer', {
-      sdp: data.sdp,
-      sender: socket.id,
-    });
-  });
+socket.on('answer', (data) => {
+  console.log(`Answer from ${socket.id} to room ${data.roomId}`);
+  socket.to(data.roomId).emit('answer', data);
+});
 
-  socket.on('ice-candidate', (data) => {
-    socket.to(data.roomId).emit('ice-candidate', {
-      candidate: data.candidate,
-      sender: socket.id,
-    });
-  });
 
+socket.on('ice-candidate', (data) => {
+  console.log(`ICE candidate from ${socket.id} to room ${data.roomId}`);
+  socket.to(data.roomId).emit('ice-candidate', data);
+});
+
+  // Handle user disconnect
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });

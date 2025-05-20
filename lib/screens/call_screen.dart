@@ -1,7 +1,5 @@
-// lib/screens/call_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mqtt_webrtc_example/services/signaling.dart';
-// import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
@@ -46,8 +44,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   void toggleCamnera() async {
-    if (_localStream.getVideoTracks().isNotEmpty) {
-      final videoTrack = _localStream.getVideoTracks()[0];
+    final localStream = _signaling.getLocalStream();
+    if (localStream != null) {
+      final videoTrack = localStream.getVideoTracks()[0];
       videoTrack.enabled = !videoTrack.enabled;
     }
   }
@@ -55,9 +54,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   Future<void> startCall() async {
     _signaling = Signaling(roomId: widget.roomId);
     await _signaling.connect();
-    _localRenderer.srcObject = _signaling.getLocalStream();
+    // _localRenderer.srcObject = _signaling.getLocalStream();
     _signaling.onRemoteStream = (stream) {
-      _remoteRenderer.srcObject = stream;
+      setState(() {
+        _remoteRenderer.srcObject = stream;
+      });
     };
   }
 
@@ -78,7 +79,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               right: 20,
               child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.lightBlue,
                     border: Border.all(color: Colors.blueAccent),
                     borderRadius: BorderRadius.circular(8),
                   ),
