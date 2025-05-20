@@ -104,25 +104,45 @@ class Signaling {
   Future<void> _createPeerConnection() async {
     try {
       _peerConnection = await createPeerConnection(_iceServers);
+
+      await _peerConnection.setConfiguration({
+        'iceServers': [
+          {'urls': 'stun:stun.l.google.com:19302'}
+        ],
+        'sdpSemantics': 'unified-plan'
+      });
+
       _localStream.getTracks().forEach((track) {
         _peerConnection.addTrack(track, _localStream);
       });
 
       _peerConnection.onIceCandidate = (candidate) {
-        _socket.emit('ice-candidate', {
-          'roomId': roomId,
-          'candidate': candidate.candidate,
-          'sdpMid': candidate.sdpMid,
-          'sdpMLineIndex': candidate.sdpMLineIndex,
-        });
+        if (candidate.candidate != null) {
+          _socket.emit('ice-candidate', {
+            'roomId': roomId,
+            'candidate': candidate.candidate,
+            'sdpMid': candidate.sdpMid,
+            'sdpMLineIndex': candidate.sdpMLineIndex,
+          });
+        }
       };
 
-      _peerConnection.onAddStream = (stream) {
-        log('Remote stream received: ${stream.id}');
-        onRemoteStream?.call(stream);
+      // In Signaling class - Update onTrack handler
+      _peerConnection.onTrack = (RTCTrackEvent event) async {
+        if (event.streams.isNotEmpty && event.streams.first.getVideoTracks().isNotEmpty) {
+          log('Remote video track detected: ${event.track.id}');
+          if (onRemoteStream != null) {
+            onRemoteStream!(event.streams.first);
+          }
+        }
+      };
+
+      _peerConnection.onIceConnectionState = (state) {
+        log('ICE connection state changed: $state');
       };
     } catch (e) {
       log('Error creating peer connection: $e');
+      rethrow;
     }
   }
 
