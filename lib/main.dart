@@ -1,71 +1,33 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:mqtt_webrtc_example/screens/call_screen.dart';
-import 'package:mqtt_webrtc_example/screens/chat_screen.dart';
+import 'package:mqtt_webrtc_example/core/componsnts/app_theme.dart';
+import 'package:mqtt_webrtc_example/core/router/router.dart';
+import 'package:mqtt_webrtc_example/core/router/router.gr.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('chat_messages');
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+  MyApp({super.key});
+  final _appRouter = AppRouter();
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const HomePage(),
-    );
-  }
-}
+    return MaterialApp.router(
+        title: 'Chat App',
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.system,
+        routerConfig: _appRouter.config(
+            navigatorObservers: () => [],
+            deepLinkBuilder: (deepLink) {
+              final route = ChatHomeRoute();
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-          child: Column(
-        children: [
-          TextButton(
-              onPressed: () async {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const VideoCallScreen(
-                        roomId: 'my_room',
-                      ),
-                    ));
-              },
-              child: const Text("Call")),
-          TextButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(
-                        chatWithUserId: '123',
-                        currentUserId: '122',
-                      ),
-                    ));
-              },
-              child: const Text("Chat")),
-        ],
-      )),
-    );
+              return DeepLink(route.flattened);
+            }),
+        theme: getApplicationTheme());
   }
 }

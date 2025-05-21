@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:mqtt_webrtc_example/core/componsnts/app_colors.dart';
+import 'package:mqtt_webrtc_example/screens/chat_detailpage.dart';
 import 'package:mqtt_webrtc_example/services/signaling.dart';
 
 class VideoCallScreen extends StatefulWidget {
@@ -14,11 +16,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   late Signaling _signaling;
-  bool _isMicMuted = true;
+  bool _isMicMuted = false;
   bool isCameraOff = false;
   bool _isLocalVideoOff = false;
   bool _isRemoteStreamConnected = false;
-  Offset _remoteRendererPosition = const Offset(0, 0);
+  Offset _remoteRendererPosition = const Offset(220, 90);
 
   @override
   void initState() {
@@ -75,14 +77,17 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     }
   }
 
+  void _hangUp() {
+    _localRenderer.srcObject?.getTracks().forEach((track) => track.stop());
+    _remoteRenderer.srcObject?.getTracks().forEach((track) => track.stop());
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Video Call'),
-        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_new)),
-      ),
       body: SafeArea(
+        top: false,
         child: Stack(
           children: [
             _isLocalVideoOff
@@ -100,8 +105,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 : SizedBox(
                     height: double.infinity,
                     width: double.infinity,
-                    child: RTCVideoView(_localRenderer, mirror: true),
+                    child: RTCVideoView(_localRenderer, mirror: true, objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover),
                   ),
+            Positioned(
+              left: 30,
+              top: 50,
+              child: Container(color: Colors.transparent, child: const AppBarUserInfo()),
+            ),
             Positioned(
               left: _remoteRendererPosition.dx,
               top: _remoteRendererPosition.dy,
@@ -117,19 +127,12 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               ),
             ),
             Positioned(
-                top: 20,
-                right: 20,
-                child: Text(
-                  _isRemoteStreamConnected ? 'Connected' : 'Connecting....',
-                  style: TextStyle(color: _isLocalVideoOff ? Colors.white : Colors.black),
-                )),
-            Positioned(
               bottom: 20,
               left: 20,
               right: 20,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.yellowAccent,
+                  color: AppColors.primaryColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -138,23 +141,36 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     IconButton(
                       icon: Icon(
                         _isMicMuted ? Icons.mic_off : Icons.mic,
-                        color: Colors.blue,
+                        color: AppColors.white,
                       ),
                       onPressed: _toggleMic,
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.switch_camera,
-                        color: Colors.blue,
+                        color: AppColors.white,
                       ),
                       onPressed: _toggleCamera,
                     ),
                     IconButton(
                       icon: Icon(
                         _isLocalVideoOff ? Icons.videocam_off : Icons.videocam,
-                        color: Colors.blue,
+                        color: AppColors.white,
                       ),
                       onPressed: _toggleLocalVideo,
+                    ),
+                    InkWell(
+                      onTap: () {
+                        _hangUp();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Icon(Icons.call_end, color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -209,19 +225,5 @@ class RemoteView extends StatelessWidget {
         },
       ),
     );
-  }
-}
-
-class MyWidget extends StatefulWidget {
-  const MyWidget({super.key});
-
-  @override
-  State<MyWidget> createState() => _MyWidgetState();
-}
-
-class _MyWidgetState extends State<MyWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
   }
 }
